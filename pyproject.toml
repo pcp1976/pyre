@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "pyre"
+version = "0.1.0"
+description = ""
+authors = ["Paul <pcp1976@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+
+[tool.poetry.dev-dependencies]
+
+[tool.autopep8]
+max-line-length = 120
+max-complexity = 10
+exclude = [".venv", ".tox", "dist", "doc", "build", "*.egg", ".tox.env"]
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

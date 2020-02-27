@@ -16,31 +16,31 @@ def chat_task(ctx, pipe, ncmds):
     while not n.peer_groups():
         pass
 
-    pipe.send('ready'.encode('utf-8'))
+    pipe.send("ready".encode("utf-8"))
     cmds = 0
     t0 = time.time()
 
     poller = zmq.Poller()
     poller.register(pipe, zmq.POLLIN)
     poller.register(n.inbox, zmq.POLLIN)
-    while(True):
+    while True:
         items = dict(poller.poll())
         if pipe in items and items[pipe] == zmq.POLLIN:
             message = pipe.recv()
             # message to quit
-            if message.decode('utf-8') == "$$STOP":
+            if message.decode("utf-8") == "$$STOP":
                 break
             n.shout("CHAT", message)
         if n.inbox in items and items[n.inbox] == zmq.POLLIN:
             n.recv()
             cmds += 1
             if cmds == ncmds:
-                msg = 'Got %s msgs in %0.2f sec' % (cmds, time.time() - t0)
-                pipe.send(msg.encode('utf-8'))
+                msg = "Got %s msgs in %0.2f sec" % (cmds, time.time() - t0)
+                pipe.send(msg.encode("utf-8"))
     n.stop()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Create a StreamHandler for debugging
     logger = logging.getLogger("pyre")
     logger.setLevel(logging.INFO)
@@ -55,9 +55,9 @@ if __name__ == '__main__':
     chat_pipe.recv()
 
     for i in range(ntasks):
-        chat_pipe.send('hello'.encode('utf-8'))
+        chat_pipe.send("hello".encode("utf-8"))
         time.sleep(0.0001)
 
-    print(chat_pipe.recv().decode('utf-8'))
-    chat_pipe.send("$$STOP".encode('utf_8'))
+    print(chat_pipe.recv().decode("utf-8"))
+    chat_pipe.send("$$STOP".encode("utf_8"))
     print("FINISHED")

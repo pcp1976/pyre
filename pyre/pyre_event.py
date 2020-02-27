@@ -1,4 +1,7 @@
-import zmq, uuid, json
+import zmq
+import uuid
+import json
+
 
 class PyreEvent(object):
     """Parsing Pyre messages
@@ -7,6 +10,7 @@ class PyreEvent(object):
     work that you will want to do in many cases, such as unpacking the peer
     headers for each ENTER event received.
     """
+
     def __init__(self, node):
         """Constructor, creates a new Pyre event. Receive an event from the Pyre node, wraps Pyre.recv.
 
@@ -16,25 +20,25 @@ class PyreEvent(object):
         super(PyreEvent, self).__init__()
         incoming = node.recv()
 
-        self.type = incoming.pop(0).decode('utf-8')
+        self.type = incoming.pop(0).decode("utf-8")
         self.peer_uuid_bytes = incoming.pop(0)
-        self.peer_name = incoming.pop(0).decode('utf-8')
+        self.peer_name = incoming.pop(0).decode("utf-8")
         self.headers = None
         self.peer_addr = None
         self.group = None
         self.msg = None
         if self.type == "ENTER":
-            self.headers = json.loads(incoming.pop(0).decode('utf-8'))
-            self.peer_addr = incoming.pop(0).decode('utf-8')
+            self.headers = json.loads(incoming.pop(0).decode("utf-8"))
+            self.peer_addr = incoming.pop(0).decode("utf-8")
         elif self.type == "JOIN" or self.type == "LEAVE":
-            self.group = incoming.pop(0).decode('utf-8')
+            self.group = incoming.pop(0).decode("utf-8")
         elif self.type == "WHISPER":
             self.msg = incoming
         elif self.type == "SHOUT":
-            self.group = incoming.pop(0).decode('utf-8')
+            self.group = incoming.pop(0).decode("utf-8")
             self.msg = incoming
 
-    def header(self,name):
+    def header(self, name):
         """Getter for single header values
 
         Args:
@@ -57,4 +61,4 @@ class PyreEvent(object):
         return uuid.UUID(bytes=self.peer_uuid_bytes)
 
     def __str__(self):
-        return '<%s %s from %s>'%(__name__, self.type, self.peer_uuid.hex)
+        return "<%s %s from %s>" % (__name__, self.type, self.peer_uuid.hex)

@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 class ZreMsg(object):
 
     VERSION = 2
-    HELLO   = 1
+    HELLO = 1
     WHISPER = 2
     SHOUT = 3
     JOIN = 4
@@ -59,11 +59,11 @@ class ZreMsg(object):
         self.name = ""
         self.headers = {}
         self.content = b""
-        self.struct_data = kwargs.get("data", b'')
+        self.struct_data = kwargs.get("data", b"")
         self._needle = 0
         self._ceil = len(self.struct_data)
 
-    #def __del__(self):
+    # def __del__(self):
 
     def recv(self, input_socket):
         # If we're reading from a ROUTER socket, get address
@@ -137,7 +137,7 @@ class ZreMsg(object):
     # Send the zre_msg to the output, and destroy it
     def send(self, output_socket):
         # clear data
-        self.struct_data = b''
+        self.struct_data = b""
         self._needle = 0
 
         # add signature
@@ -145,7 +145,7 @@ class ZreMsg(object):
 
         # add id
         self._put_number1(self.id)
-        #print(self.struct_data)
+        # print(self.struct_data)
         # add version
         self._put_number1(2)
 
@@ -184,7 +184,7 @@ class ZreMsg(object):
         if output_socket.type == zmq.ROUTER:
             output_socket.send(self.address.bytes, zmq.SNDMORE)
         # Now send the data frame
-        if (self.content):
+        if self.content:
             output_socket.send(self.struct_data, zmq.SNDMORE)
             if isinstance(self.content, list):
                 output_socket.send_multipart(self.content)
@@ -338,60 +338,60 @@ class ZreMsg(object):
 
     def _get_string(self):
         s_len = self._get_number1()
-        s = struct.unpack_from(str(s_len) + 's', self.struct_data, offset=self._needle)
-        self._needle += struct.calcsize('s' * s_len)
-        return s[0].decode('UTF-8')
+        s = struct.unpack_from(str(s_len) + "s", self.struct_data, offset=self._needle)
+        self._needle += struct.calcsize("s" * s_len)
+        return s[0].decode("UTF-8")
 
     def _get_number1(self):
-        num = struct.unpack_from('>B', self.struct_data, offset=self._needle)
-        self._needle += struct.calcsize('>B')
+        num = struct.unpack_from(">B", self.struct_data, offset=self._needle)
+        self._needle += struct.calcsize(">B")
         return num[0]
 
     def _get_number2(self):
-        num = struct.unpack_from('>H', self.struct_data, offset=self._needle)
-        self._needle += struct.calcsize('>H')
+        num = struct.unpack_from(">H", self.struct_data, offset=self._needle)
+        self._needle += struct.calcsize(">H")
         return num[0]
 
     def _get_number4(self):
-        num = struct.unpack_from('>I', self.struct_data, offset=self._needle)
-        self._needle += struct.calcsize('>I')
+        num = struct.unpack_from(">I", self.struct_data, offset=self._needle)
+        self._needle += struct.calcsize(">I")
         return num[0]
 
     def _get_number8(self):
-        num = struct.unpack_from('>Q', self.struct_data, offset=self._needle)
-        self._needle += struct.calcsize('>Q')
+        num = struct.unpack_from(">Q", self.struct_data, offset=self._needle)
+        self._needle += struct.calcsize(">Q")
         return num[0]
 
     def _get_long_string(self):
         s_len = self._get_number4()
-        s = struct.unpack_from(str(s_len) + 's', self.struct_data, offset=self._needle)
-        self._needle += struct.calcsize('s' * s_len)
-        return s[0].decode('UTF-8')
+        s = struct.unpack_from(str(s_len) + "s", self.struct_data, offset=self._needle)
+        self._needle += struct.calcsize("s" * s_len)
+        return s[0].decode("UTF-8")
 
     def _put_string(self, s):
         self._put_number1(len(s))
-        d = struct.pack('%is' % len(s), s.encode('UTF-8'))
+        d = struct.pack("%is" % len(s), s.encode("UTF-8"))
         self.struct_data += d
 
     def _put_number1(self, nr):
-        d = struct.pack('>B', nr)
+        d = struct.pack(">B", nr)
         self.struct_data += d
 
     def _put_number2(self, nr):
-        d = struct.pack('>H', nr)
+        d = struct.pack(">H", nr)
         self.struct_data += d
 
     def _put_number4(self, nr):
-        d = struct.pack('>I', nr)
+        d = struct.pack(">I", nr)
         self.struct_data += d
 
     def _put_number8(self, nr):
-        d = struct.pack('>Q', nr)
+        d = struct.pack(">Q", nr)
         self.struct_data += d
 
     def _put_long_string(self, s):
         self._put_number4(len(s))
-        d = struct.pack('%is' % len(s), s.encode('UTF-8'))
+        d = struct.pack("%is" % len(s), s.encode("UTF-8"))
         self.struct_data += d
 
     def unpack_hello(self):
@@ -404,21 +404,21 @@ class ZreMsg(object):
         name          string
         headers       dictionary
         """
-        #self._needle = 0
+        # self._needle = 0
         self.sequence = self._get_number2()
-        #print(self.sequence)
-        #print("needle is at: %i"% self._needle )
+        # print(self.sequence)
+        # print("needle is at: %i"% self._needle )
         self.endpoint = self._get_string()
-        #print(self.ipaddress)
-        #print("needle is at: %i"% self._needle )
+        # print(self.ipaddress)
+        # print("needle is at: %i"% self._needle )
         group_len = self._get_number4()
-        #print("needle is at: %i"% self._needle )
-        #print("grouplen: ", group_len)
+        # print("needle is at: %i"% self._needle )
+        # print("grouplen: ", group_len)
         self.groups = []
         for x in range(group_len):
             self.groups.append(self._get_long_string())
-        #print(self.groups)
-        #print("post_group: needle is at: %i"% self._needle )
+        # print(self.groups)
+        # print("post_group: needle is at: %i"% self._needle )
         self.status = self._get_number1()
         self.name = self._get_string()
         headers_len = self._get_number4()
@@ -427,11 +427,11 @@ class ZreMsg(object):
             key = self._get_string()
             val = self._get_long_string()
             self.headers.update({key: val})
-            #import ast
-            #for hdr in hdrlist:
+            # import ast
+            # for hdr in hdrlist:
             #    # TODO: safer to use ast.literal_eval
             #    headers.update(ast.literal_eval(hdr))
-        #print(self.headers)
+        # print(self.headers)
 
     def pack_hello(self):
         """Pack a zre hello packet
@@ -444,10 +444,10 @@ class ZreMsg(object):
         headers       dictionary
         """
         # clear data
-        #self.struct_data = b''
-        #print(len(self.struct_data))
-        #self._put_number2(0xAAA0)
-        #self._put_number1(self.id)
+        # self.struct_data = b''
+        # print(len(self.struct_data))
+        # self._put_number2(0xAAA0)
+        # self._put_number1(self.id)
         self._put_number2(self.sequence)
         self._put_string(self.endpoint)
         self._put_number4(len(self.groups))
@@ -460,28 +460,38 @@ class ZreMsg(object):
             self._put_string(key)
             self._put_long_string(val)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     logger.addHandler(logging.StreamHandler())
     logger.setLevel(logging.DEBUG)
     # self._put_long_string("%s=%s" % (key, val))  # undefined: self, key, val
 
-    testdata = struct.pack('>Hb9sII2sI2sI2sbb4sIb1sI1sb1sI1s',
-                           11,         # sequence
-                           9,          # str length
-                           b"192:20123",   # endpoint
-                           20123,      # mailbox
-                           3,          # groups len
-                           2, b"g1",   # length + groupname
-                           2, b"g2",   # length + groupname
-                           2, b"g3",   # length + groupname
-                           4,          # status
-                           4, b"NAME", # name
-                           2,          # header len
-                           1, b"a",    # length + dict
-                           1, b"z",    # length + dict
-                           1, b"b",    # length + dict
-                           1, b"b"     # length + dict
-                    )
+    testdata = struct.pack(
+        ">Hb9sII2sI2sI2sbb4sIb1sI1sb1sI1s",
+        11,  # sequence
+        9,  # str length
+        b"192:20123",  # endpoint
+        20123,  # mailbox
+        3,  # groups len
+        2,
+        b"g1",  # length + groupname
+        2,
+        b"g2",  # length + groupname
+        2,
+        b"g3",  # length + groupname
+        4,  # status
+        4,
+        b"NAME",  # name
+        2,  # header len
+        1,
+        b"a",  # length + dict
+        1,
+        b"z",  # length + dict
+        1,
+        b"b",  # length + dict
+        1,
+        b"b",  # length + dict
+    )
 
     logger.debug("New ZRE HELLO message")
     m = ZreMsg(ZreMsg.HELLO, data=testdata)

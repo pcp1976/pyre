@@ -1,4 +1,3 @@
-
 # ======================================================================
 #  zbeacon - LAN discovery and presence
 #
@@ -36,28 +35,29 @@ from .zhelper import u
 logger = logging.getLogger(__name__)
 
 INTERVAL_DFLT = 1.0
-BEACON_MAX = 255      # Max size of beacon data
-MULTICAST_GRP = '225.25.25.25'
-ENETDOWN = 50   #socket error, network is down
-ENETUNREACH = 51 #socket error, network unreachable
+BEACON_MAX = 255  # Max size of beacon data
+MULTICAST_GRP = "225.25.25.25"
+ENETDOWN = 50  # socket error, network is down
+ENETUNREACH = 51  # socket error, network unreachable
 
 
 class ZBeacon(object):
-
     def __init__(self, ctx, pipe, *args, **kwargs):
-        self.ctx = ctx                #  ZMQ context
-        self.pipe = pipe              #  Actor command pipe
-        self.udpsock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-                                      #  UDP socket for send/recv
-        self.port_nbr = 0             #  UDP port number we work on
-        self.interval = INTERVAL_DFLT #  Beacon broadcast interval
-        self.ping_at = 0              #  Next broadcast time
-        self.transmit = None          #  Beacon transmit data
-        self.filter = b""             #  Beacon filter data
+        self.ctx = ctx  # ZMQ context
+        self.pipe = pipe  # Actor command pipe
+        self.udpsock = socket.socket(
+            socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP
+        )
+        #  UDP socket for send/recv
+        self.port_nbr = 0  # UDP port number we work on
+        self.interval = INTERVAL_DFLT  # Beacon broadcast interval
+        self.ping_at = 0  # Next broadcast time
+        self.transmit = None  # Beacon transmit data
+        self.filter = b""  # Beacon filter data
 
-        self.terminated = False       #  Did caller ask us to quit?
-        self.verbose = False          #  Verbose logging enabled?
-        self.hostname = ""            #  Saved host name
+        self.terminated = False  # Did caller ask us to quit?
+        self.verbose = False  # Verbose logging enabled?
+        self.hostname = ""  # Saved host name
 
         self.address = None
         self.network_address = None
@@ -75,18 +75,16 @@ class ZBeacon(object):
             self.udpsock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
             self.udpsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-            #  On some platforms we have to ask to reuse the port
+            # On some platforms we have to ask to reuse the port
             try:
-                self.udpsock.setsockopt(socket.SOL_SOCKET,
-                                        socket.SO_REUSEPORT, 1)
+                self.udpsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
 
             except AttributeError:
                 pass
 
             if self.broadcast_address.is_multicast:
                 # TTL
-                self.udpsock.setsockopt(socket.IPPROTO_IP,
-                                        socket.IP_MULTICAST_TTL, 2)
+                self.udpsock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
 
                 # TODO: This should only be used if we do not have inproc method!
                 self.udpsock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_LOOP, 1)
@@ -114,24 +112,30 @@ class ZBeacon(object):
                 self.udpsock.bind(("", self.port_nbr))
 
                 group = socket.inet_aton("{0}".format(self.broadcast_address))
-                mreq = struct.pack('4sl', group, socket.INADDR_ANY)
+                mreq = struct.pack("4sl", group, socket.INADDR_ANY)
 
-                self.udpsock.setsockopt(socket.SOL_IP,
-                                        socket.IP_ADD_MEMBERSHIP, mreq)
+                self.udpsock.setsockopt(socket.SOL_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
             else:
                 # Platform specifics
                 if platform.startswith("linux"):
                     # on linux we bind to the broadcast address and send to
                     # the broadcast address
-                    self.udpsock.bind((str(self.broadcast_address),
-                                       self.port_nbr))
+                    self.udpsock.bind((str(self.broadcast_address), self.port_nbr))
                 else:
                     self.udpsock.bind(("", self.port_nbr))
 
-                logger.debug("Set up a broadcast beacon to {0}:{1}".format(self.broadcast_address, self.port_nbr))
+                logger.debug(
+                    "Set up a broadcast beacon to {0}:{1}".format(
+                        self.broadcast_address, self.port_nbr
+                    )
+                )
         except socket.error:
-            logger.exception("Initializing of {0} raised an exception".format(self.__class__.__name__))
+            logger.exception(
+                "Initializing of {0} raised an exception".format(
+                    self.__class__.__name__
+                )
+            )
 
     def _prepare_socket(self):
         netinf = zhelper.get_ifaddrs()
@@ -154,7 +158,9 @@ class ZBeacon(object):
                 netmask_str = data_2.get("netmask")
 
                 if not address_str or not netmask_str:
-                    logger.debug("Address or netmask not found for interface {0}.".format(name))
+                    logger.debug(
+                        "Address or netmask not found for interface {0}.".format(name)
+                    )
                     continue
 
                 if isinstance(address_str, bytes):
@@ -186,10 +192,10 @@ class ZBeacon(object):
         logger.debug("Finished scanning interfaces.")
 
         if not self.address:
-            self.network_address = ipaddress.IPv4Address(u('127.0.0.1'))
+            self.network_address = ipaddress.IPv4Address(u("127.0.0.1"))
             self.broadcast_address = ipaddress.IPv4Address(u(MULTICAST_GRP))
-            self.interface_name = 'loopback'
-            self.address = u('127.0.0.1')
+            self.interface_name = "loopback"
+            self.address = u("127.0.0.1")
 
         logger.debug("Address: {0}".format(self.address))
         logger.debug("Network: {0}".format(self.network_address))
@@ -204,9 +210,9 @@ class ZBeacon(object):
     def handle_pipe(self):
         #  Get just the commands off the pipe
         request = self.pipe.recv_multipart()
-        command = request.pop(0).decode('UTF-8')
+        command = request.pop(0).decode("UTF-8")
         if not command:
-            return -1                  #  Interrupted
+            return -1  # Interrupted
 
         if self.verbose:
             logger.debug("zbeacon: API command={0}".format(command))
@@ -214,7 +220,7 @@ class ZBeacon(object):
         if command == "VERBOSE":
             self.verbose = True
         elif command == "CONFIGURE":
-            port = struct.unpack('I', request.pop(0))[0]
+            port = struct.unpack("I", request.pop(0))[0]
             self.configure(port)
         elif command == "PUBLISH":
             self.transmit = request.pop(0)
@@ -247,8 +253,8 @@ class ZBeacon(object):
         is_valid = False
         if self.filter is not None:
             if len(self.filter) <= len(frame):
-                match_data = frame[:len(self.filter)]
-                if (match_data == self.filter):
+                match_data = frame[: len(self.filter)]
+                if match_data == self.filter:
                     is_valid = True
 
         #  If valid, discard our own broadcasts, which UDP echoes to us
@@ -263,22 +269,24 @@ class ZBeacon(object):
 
     def send_beacon(self):
         try:
-            self.udpsock.sendto(self.transmit, (str(self.broadcast_address),
-                                                self.port_nbr))
-            
+            self.udpsock.sendto(
+                self.transmit, (str(self.broadcast_address), self.port_nbr)
+            )
+
         except OSError as e:
-            
+
             # network down, just wait, it could come back up again.
             # socket call errors 50 and 51 relate to the network being
-            # down or unreachable, the recommended action to take is to 
+            # down or unreachable, the recommended action to take is to
             # try again so we don't terminate in these cases.
-            if e.errno in [ENETDOWN, ENETUNREACH]: pass
-            
+            if e.errno in [ENETDOWN, ENETUNREACH]:
+                pass
+
             # all other cases, we'll terminate
             else:
                 logger.debug("Network seems gone, exiting zbeacon")
                 self.terminated = True
-                
+
         except socket.error:
             logger.debug("Network seems gone, exiting zbeacon")
             self.terminated = True
@@ -301,7 +309,10 @@ class ZBeacon(object):
             items = dict(self.poller.poll(timeout * 1000))
             if self.pipe in items and items[self.pipe] == zmq.POLLIN:
                 self.handle_pipe()
-            if self.udpsock.fileno() in items and items[self.udpsock.fileno()] == zmq.POLLIN:
+            if (
+                self.udpsock.fileno() in items
+                and items[self.udpsock.fileno()] == zmq.POLLIN
+            ):
                 self.handle_udp()
 
             if self.transmit and time.time() >= self.ping_at:
@@ -309,18 +320,20 @@ class ZBeacon(object):
                 self.ping_at = time.time() + self.interval
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import zmq
     import struct
     import time
+
     speaker = ZActor(zmq.Context(), ZBeacon)
     speaker.send_unicode("VERBOSE")
     speaker.send_unicode("CONFIGURE", zmq.SNDMORE)
     speaker.send(struct.pack("I", 9999))
     speaker.send_unicode("PUBLISH", zmq.SNDMORE)
     import uuid
-    transmit = struct.pack('cccb16sH', b'Z', b'R', b'E',
-                           1, uuid.uuid4().bytes,
-                           socket.htons(1300))
+
+    transmit = struct.pack(
+        "cccb16sH", b"Z", b"R", b"E", 1, uuid.uuid4().bytes, socket.htons(1300)
+    )
     speaker.send(transmit)
     speaker.destroy()

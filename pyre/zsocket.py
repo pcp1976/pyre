@@ -1,10 +1,10 @@
 # =========================================================================
 # zsocket - working with 0MQ sockets
-# 
+#
 # Copyright (c) the Contributors as noted in the AUTHORS file.
 # This file is part of CZMQ, the high-level C binding for 0MQ:
 # http://czmq.zeromq.org.
-# 
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -16,8 +16,8 @@
 import zmq
 import struct
 
-class ZSocket(zmq.Socket):
 
+class ZSocket(zmq.Socket):
     def __init__(self, *args, **kwargs):
         super(ZSocket, self).__init__(*args, **kwargs)
 
@@ -25,14 +25,14 @@ class ZSocket(zmq.Socket):
     #  Send a signal over a socket. A signal is a zero-byte message.
     #  Signals are used primarily between threads, over pipe sockets.
     #  Returns -1 if there was an error sending the signal.
-    #def signal(self):
+    # def signal(self):
     #    self.send_unicode("")
 
     #  --------------------------------------------------------------------------
     #  Wait on a signal. Use this to coordinate between threads, over
     #  pipe pairs. Blocks until the signal is received. Returns -1 on error,
     #  0 on success.
-    #def wait(self):
+    # def wait(self):
     #    while True:
     #        msg = self.recv()
     #        print("WAIT MSG", msg)
@@ -42,7 +42,7 @@ class ZSocket(zmq.Socket):
     #  success/failure code (by convention, 0 means OK). Signals are encoded
     #  to be distinguishable from "normal" messages. Accepts a zock_t or a
     #  zactor_t argument, and returns 0 if successful, -1 if the signal could
-    #  not be sent. 
+    #  not be sent.
     # Send a signal over a socket. A signal is a zero-byte message.
     # Signals are used primarily between threads, over pipe sockets.
     # Returns -1 if there was an error sending the signal.
@@ -55,10 +55,10 @@ class ZSocket(zmq.Socket):
     #  value. If we get anything else, we discard it and continue to look
     #  for the signal message
     def wait(self):
-        while(True):
+        while True:
             msg = self.recv()
             if len(msg) == 8:
-                signal_value = struct.unpack('Q', msg)[0]
+                signal_value = struct.unpack("Q", msg)[0]
                 if (signal_value & 0xFFFFFFFFFFFFFF00) == 0x7766554433221100:
                     # return True or False based on the signal value send
                     return signal_value & 255

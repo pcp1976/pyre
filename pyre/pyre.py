@@ -18,13 +18,12 @@ from .pyre_event import PyreEvent
 logger = logging.getLogger(__name__)
 
 try:
-    raw_input          # Python 2
+    raw_input  # Python 2
 except NameError:
     raw_input = input  # Python 3
 
 
 class Pyre(object):
-
     def __init__(self, name=None, ctx=None, *args, **kwargs):
         """Constructor, creates a new Zyre node. Note that until you start the
         node it is silent and invisible to other nodes on the network.
@@ -38,8 +37,8 @@ class Pyre(object):
             ctx: PyZMQ Context, if not specified a new context will be created
         """
         super(Pyre, self).__init__(*args, **kwargs)
-        ctx = kwargs.get('ctx')
-        if ctx == None:
+        ctx = kwargs.get("ctx")
+        if ctx is None:
             ctx = zmq.Context()
         self._ctx = ctx
         self._uuid = None
@@ -50,22 +49,17 @@ class Pyre(object):
         # Start node engine and wait for it to be ready
         self.actor = ZActor(self._ctx, PyreNode, self._outbox)
         # Send name, if any, to node backend
-        if (self._name):
+        if self._name:
             self.actor.send_unicode("SET NAME", zmq.SNDMORE)
             self.actor.send_unicode(self._name)
 
-    #def __del__(self):
-        # We need to explicitly destroy the actor
-        # to make sure our node thread is stopped
-        #self.actor.destroy()
-
     def __bool__(self):
-        "Determine whether the object is valid by converting to boolean" # Python 3
-        return True  #TODO
+        "Determine whether the object is valid by converting to boolean"  # Python 3
+        return True  # TODO
 
     def __nonzero__(self):
-        "Determine whether the object is valid by converting to boolean" # Python 2
-        return True  #TODO
+        "Determine whether the object is valid by converting to boolean"  # Python 2
+        return True  # TODO
 
     def uuid(self):
         """Return our node UUID string, after successful initialization"""
@@ -79,12 +73,14 @@ class Pyre(object):
         """Return our node name, after successful initialization"""
         if not self._name:
             self.actor.send_unicode("NAME")
-            self._name = self.actor.recv().decode('utf-8')
+            self._name = self.actor.recv().decode("utf-8")
         return self._name
 
     # Not in Zyre api
     def set_name(self, name):
-        logger.warning("DEPRECATED: set name in constructor, this method will be removed!")
+        logger.warning(
+            "DEPRECATED: set name in constructor, this method will be removed!"
+        )
         self.actor.send_unicode("SET NAME", zmq.SNDMORE)
         self.actor.send_unicode(name)
 
@@ -117,7 +113,7 @@ class Pyre(object):
         """Set network interface for UDP beacons. If you do not set this, CZMQ will
         choose an interface for you. On boxes with several interfaces you should
         specify which one you want to use, or strange things can happen."""
-        logging.debug("set_interface not implemented") #TODO
+        logging.debug("set_interface not implemented")  # TODO
 
     # TODO: check args from zyre
     def set_endpoint(self, format, *args):
@@ -133,8 +129,8 @@ class Pyre(object):
         self.actor.send_unicode(format)
 
     # TODO: We haven't implemented gossiping yet
-    #def gossip_bind(self, format, *args):
-    #def gossip_connect(self, format, *args):
+    # def gossip_bind(self, format, *args):
+    # def gossip_connect(self, format, *args):
 
     def start(self):
         """Start node, after setting header values. When you start a node it
@@ -271,7 +267,7 @@ class Pyre(object):
 
     def own_groups(self):
         """Return list of currently joined groups."""
-        self.actor.send_unicode("OWN GROUPS");
+        self.actor.send_unicode("OWN GROUPS")
         groups = self.actor.recv_pyobj()
         return groups
 
@@ -290,6 +286,7 @@ class Pyre(object):
     def version():
         return __version_info__
 
+
 def chat_task(ctx, pipe):
     n = Pyre(ctx=ctx)
     n.join("CHAT")
@@ -298,11 +295,11 @@ def chat_task(ctx, pipe):
     poller = zmq.Poller()
     poller.register(pipe, zmq.POLLIN)
     poller.register(n.socket(), zmq.POLLIN)
-    while(True):
+    while True:
         items = dict(poller.poll())
         if pipe in items:
             message = pipe.recv()
-            if message == '$TERM':
+            if message == "$TERM":
                 break
             logger.debug("CHAT_TASK: {0}".format(message))
             n.shout("CHAT", message)
@@ -319,9 +316,10 @@ def chat_task(ctx, pipe):
             logger.debug("NODE_MSG CONT: {0}".format(event.msg))
     n.stop()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     logging.basicConfig()
-    logging.getLogger('__main__').setLevel(logging.DEBUG)
+    logging.getLogger("__main__").setLevel(logging.DEBUG)
 
     ctx = zmq.Context()
     chat_pipe = zhelper.zthread_fork(ctx, chat_task)
@@ -330,6 +328,6 @@ if __name__ == '__main__':
             msg = raw_input()
             chat_pipe.send_string(msg)
         except (KeyboardInterrupt, SystemExit):
-            chat_pipe.send_string('$TERM')
+            chat_pipe.send_string("$TERM")
             break
     logger.debug("Exiting")
